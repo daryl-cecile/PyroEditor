@@ -1,0 +1,597 @@
+:root{
+    --dark-color: #2e2e2e;
+    --light-color: #bfbfbf;
+    --dark-primary-color: #148f5a;
+    --neon-color: #FFC906;
+    --sponsor-color: #cc4661;
+    --brand-color: #19CF86;
+    --font-color: #323232;
+    --faint-color: #909090;
+    --focus-color: #191919;
+}
+
+html{
+    overflow-x: hidden;
+}
+
+
+/* NAV LENS */
+
+nav.lens-nav{
+    height: 45px;
+    background: var(--dark-color);
+    color: white;
+    padding: 0;
+}
+
+nav.lens-nav a {
+    color: inherit;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+}
+
+nav.lens-nav ul:not(:nth-child(2)) li.active{
+    color: var(--brand-color);
+}
+
+nav.lens-nav ul:not(:nth-child(2)) li:hover{
+    background: var(--brand-color);
+    color: white;
+}
+
+nav.lens-nav ul:last-child{
+    align-items: unset;
+}
+
+nav.lens-nav ul li:hover{
+    cursor: pointer;
+}
+
+/* SIZER */
+
+.sizer{
+    position: relative;
+    width: 45px;
+    transition: all .4s;
+}
+
+.sizer *{
+    position: relative;
+    transition: all .4s;
+    pointer-events: none;
+}
+
+.sizer a{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sizer a>*{
+    display: inline-block;
+    vertical-align: middle;
+    position: absolute;
+}
+
+.sizer i{
+    opacity: 1;
+}
+
+.sizer span{
+    opacity: 0;
+    text-align: center;
+}
+
+.sizer:hover{
+    width: 90px;
+}
+
+.sizer:hover i{
+    opacity: 0;
+}
+
+.sizer:hover span{
+    opacity: 1;
+}
+
+/* LENS-MAIN */
+
+.lens-main{
+    min-height: calc(100vh - 45px);
+    position: relative;
+    display: flex;
+}
+
+/* LENS-CONTAINER */
+
+.lens-container{
+    flex: 1;
+    left:0;
+    top: 0;
+    height: calc(100vh - 45px);
+    overflow: auto;
+    position: relative;
+    order: 1;
+}
+
+/* LENS-TOOLBOX */
+
+.lens-toolbox{
+    background: #fafafa;
+    height: calc(100vh - 45px);
+    display: flex;
+    flex-direction: column;
+    width: 70px;
+    order: 0;
+}
+
+.lens-toolbox>h3{
+    border-bottom: 1px solid gainsboro;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lens-toolbox .lens-collection{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.lens-toolbox .lens-collection figure{
+    height: 50px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content:center;
+    width: 50px;
+    margin: 10px;
+    margin-bottom: 0;
+}
+
+.lens-toolbox .lens-collection figure:hover{
+    cursor: grab;
+    background: gainsboro;
+}
+
+.lens-toolbox .lens-collection figure:active{
+    cursor: grabbing;
+}
+
+.lens-toolbox .lens-collection figure:active::before,
+.lens-toolbox .lens-collection figure:active::after{
+    display:none;
+}
+
+.lens-toolbox .lens-collection figure i{
+    font-size: 30px;
+    margin: 25px auto;
+}
+
+/* LENS-TOOLBAR */
+
+.lens-toolbar{
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 45px;
+    border-bottom: 1px solid gainsboro;
+    background: rgba(255,255,255,0.9);
+    z-index: 100;
+}
+
+@supports (backdrop-filter: blur()) or (-webkit-backdrop-filter: blur()){
+    .lens-toolbar{
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(4px) saturate(150%);
+        -webkit-backdrop-filter: blur(4px) saturate(150%);
+    }
+}
+
+.lens-toolbar>*{
+    padding: 0 5px;
+}
+
+.lens-toolbar>span{
+    margin: 10px 0;
+    display: block;
+    width: 1px;
+    background: gainsboro;
+    padding: 0;
+    opacity: 1;
+    height: 60%;
+}
+
+.lens-toolbar>button{
+    min-width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: transparent;
+}
+
+.lens-toolbar>button:hover{
+    background: transparent;
+    color: var(--brand-color);
+}
+
+.lens-toolbar>button>i{
+    padding:15px;
+}
+
+.lens-toolbar .dd span{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100px;
+    padding: 0 10px;
+}
+
+.lens-toolbar .dd ul{
+    list-style: none;
+    margin:0;
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(-15px);
+    transform-origin: top center;
+    background: white;
+    pointer-events: none;
+    transition: all .4s;
+    position: absolute;
+    top: 47px;
+    width: 200%;
+    left: 2px;
+    text-align: left;
+    padding: 3px;
+    box-shadow: none;
+    border-radius: 2px;
+    border: 1px solid gainsboro;
+}
+
+.lens-toolbar .dd:focus ul{
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    box-shadow: 0 5px 50px -20px gainsboro;
+}
+
+.lens-toolbar .dd ul li{
+    color: var(--dark-color);
+    font-size: 12px;
+    padding: 5px;
+}
+
+.lens-toolbar .dd:focus ul li:hover{
+    background: #f1f1f1
+}
+
+/* LENS-PAGE */
+
+.lens-page{
+    width: 94%;
+    margin: 15px auto;
+    border-radius: 2px;
+    box-shadow: 0 3px 30px 10px gainsboro;
+    background: white;
+    padding: 15px 60px;
+    position: relative;
+    min-width: 850px;
+    max-width: 900px;
+}
+
+.lens-page .article-title {
+    padding:0;
+}
+
+/* LENS-EDITOR */
+
+.lens-editor{
+    position: relative;
+}
+
+.lens-editor.readonly{
+    caret-color: transparent;
+}
+
+.lens-editor:focus{
+    outline: none;
+}
+
+.lens-editor p{
+    margin: 10px 0;
+    line-height: 1.4;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    letter-spacing: 1.05px;
+    white-space: pre-wrap;
+}
+
+.lens-editor blockquote{
+    font-size: 24px;
+    border-left: 3px solid;
+    padding-left: 10px;
+    margin: 20px 0;
+    text-align: justify;
+    letter-spacing: 1px;
+}
+
+.lens-editor img,
+.lens-editor video,
+.lens-editor iframe{
+    width: 100%;
+    height: auto;
+    min-height: 400px;
+}
+
+.lens-editor .widget{
+    max-width: 100%;
+    position: relative;
+
+    transition: all .4s;
+}
+
+.lens-editor .widget::after {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+
+    top:-0px;
+    right:-0px;
+    bottom:-0px;
+    left:-0px;
+    position: absolute;
+    font-size: 14px;
+    color: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+
+    transition: all .4s;
+
+    opacity: 0;
+}
+
+.lens-editor.drag-active .widget:hover{
+    opacity: 0.5;
+    border-radius: 2px;
+    cursor: grab;
+}
+
+.lens-editor.drag-active .widget:active{
+    cursor: grabbing;
+}
+
+.lens-editor.drag-active .widget:hover::after{
+    opacity: 1;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.1);
+
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f0b2";
+}
+
+.lens-editor.drag-active .widget:active::after{
+    background: transparent;
+}
+
+/* WIDGET */
+
+#addParaWidgetBtn {
+    width: calc(100% + 50px);
+    height: 36px;
+    display:flex;
+    margin-left: -50px;
+    flex-direction: row;
+    align-items: center;
+    position: absolute;
+    margin-top: -20px;
+    justify-content: center;
+}
+
+#addParaWidgetBtn>span{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border: 3px solid;
+    border-radius: 50%;
+    caret-color: transparent;
+
+    color: rgba(0,0,0,0.1);
+
+    transform: scale(0.7);
+    transition: all .4s;
+}
+
+#addParaWidgetBtn>span+div{
+    display:block;
+    width:100%;
+    height: 2px;
+    transition: all .4s;
+    margin: 4px 10px;
+    background: gainsboro;
+}
+
+#addParaWidgetBtn>span:hover{
+    color: rgba(0,0,0,0.3);
+    transform: scale(0.68);
+    cursor: pointer;
+}
+
+/* LENS-DROPZONE */
+
+#dropzone {
+    display:block;
+    width: 100%;
+    min-height:20px;
+    max-height: 150px;
+    height: 100%;
+    background: gainsboro;
+    border-radius: 2px;
+    pointer-events: none;
+
+    transition: all .4s;
+}
+
+
+/* LENS-PROMPT */
+
+.lens-prompt-shade{
+    position: fixed;
+    z-index: 1000;
+    background: rgba(0,0,0,0.3);
+    -webkit-backdrop-filter: blur(3px) saturate(150%);
+    backdrop-filter: blur(3px) saturate(150%);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    top:0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    pointer-events: none;
+    opacity: 0;
+
+    transition: all .3s;
+}
+
+.lens-prompt-shade .lens-prompt{
+    width: 400px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: white;
+    opacity: 0;
+    transition: all .6s;
+    padding: 15px;
+    border-radius: 2px;
+    box-shadow: 0 5px 50px -20px gainsboro;
+    transform-origin: center bottom;
+    transform: scale(0.7) translateY(15px);
+}
+
+.lens-prompt-shade .lens-prompt h4{
+    margin-bottom: 15px;
+}
+
+.lens-prompt-shade .lens-prompt .row{
+    align-items:flex-end;
+    justify-content:flex-end;
+}
+
+.lens-prompt-shade .lens-prompt.fitmax{
+    align-items:center;
+    justify-content:center;
+    flex-direction: row;
+}
+
+.lens-prompt-shade .lens-prompt.fitmax button{
+    flex:1;
+    height: 100%;
+}
+
+.lens-prompt-shade .lens-prompt .row button{
+    margin-left: 10px;
+    width: 70px;
+}
+
+.lens-prompt-shade.show{
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lens-prompt-shade.show .lens-prompt{
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+/* LENS-SELECTOR */
+
+.lens-page .lens-selector{
+    position: absolute;
+    width: fit-content;
+
+    display: flex;
+    flex-direction: row;
+
+    transition: all .4s;
+}
+
+.lens-page .lens-selector .lens-box{
+
+    border: 2px solid var(--brand-color);
+    transition: all .4s;
+
+    position: absolute;
+    right: 42px;
+}
+
+.lens-page .lens-selector .kit{display: flex;flex-direction: column;align-items: center;width: 40px;height: 150px;}
+
+.lens-page .lens-selector .kit i{
+    width: 30px;
+    height: 30px;
+    background: var(--brand-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2px;
+    margin-left: -6px;
+    transition: all .4s;
+
+}
+
+.lens-page .lens-selector .kit i:hover{
+    color: rgba(255,255,255,0.5);
+}
+
+.lens-prompt-shade#welcome{
+    background:rgba(255,255,255,0.7);
+
+}
+
+.lens-prompt-shade#welcome img{
+    max-height: 100%;
+    transform:scale(1.05);
+    position: absolute;
+}
+
+.lens-prompt-shade#welcome span{
+    position:absolute;
+    font-size: 40px;
+    bottom: 10vh;
+    background:#673AB7;
+    padding: 12px 25px;
+    transform: scale(0.8);
+    border-radius: 3px;
+    box-shadow: 0 4px 50px -20px black;
+    color: white;
+    pointer-events: none;
+    font-weight: 400;
+    letter-spacing: 4px
+}

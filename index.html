@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="src/HTMLObjectifier.js"></script>
+    <script src="src/HTMLSanitizer.js"></script>
+    <script src="src/XWriter.js"></script>
+</head>
+<body>
+
+<x-writer id="main"></x-writer>
+
+<script>
+    let writer = $('x-writer#main').get(0);
+
+    writer.setOption('resourceBasePath','src');
+
+    writer.init();
+
+    writer.loadPluginScript("youtube");
+    writer.loadPluginScript("website");
+    writer.loadPluginScript("code");
+    writer.loadPluginScript("image");
+    writer.loadPluginScript("soundcloud");
+    writer.loadPluginScript("unsplash");
+    writer.loadPluginScript("map");
+    writer.loadPluginScript("quote");
+    writer.loadPluginScript("slideshow");
+
+    writer.setMiddleWare("convertToSecureSource", (src)=>{
+        return src;
+    });
+
+    writer.addEventListener('saved', e => {
+        console.log(e);
+    });
+</script>
+
+</body>
+</html>

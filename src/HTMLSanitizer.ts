@@ -2,14 +2,18 @@
  * Created by darylcecile on 11/01/2019.
  */
 
+type onAttributeHandler = (nodeName:string, attrName:string, attrVal:string) => string;
+type onCssHandler = (nodeName:string,cssName:string,cssValue:any)=>any;
+type onNodeHandler = (node)=>HTMLElement|undefined|false;
+
 class HTMLSanitizer{
     private allowedNodes;
     private virtualDoc:Document;
     private keepComments:boolean;
 
-    private onAttr:(nodeName:string,attrName:string,attrVal:string)=>string = (nodeName,attrName,attrVal) => { return attrVal };
-    private onCss:(nodeName:string,cssName:string,cssValue:any)=>any = (nodeName,cssName,cssValue) => { return cssValue };
-    private onNode:(nodeName?:string)=>boolean = () => { return true };
+    private onAttr:onAttributeHandler = (nodeName,attrName,attrVal) => { return attrVal };
+    private onCss:onCssHandler = (nodeName,cssName,cssValue) => { return cssValue };
+    private onNode:onNodeHandler = (n) => { return n };
 
     constructor({allowedNodes,keepComments=true}){
         this.allowedNodes = allowedNodes;
@@ -17,22 +21,22 @@ class HTMLSanitizer{
         this.keepComments = keepComments;
     }
 
-    onAttribute(handler){
+    onAttribute(handler:onAttributeHandler){
         this.onAttr = handler;
         return this;
     }
 
-    onStyle(handler){
+    onStyle(handler:onCssHandler){
         this.onCss = handler;
         return this;
     }
 
-    onTag(handler){
+    onTag(handler:onNodeHandler){
         this.onNode = handler;
         return this;
     }
 
-    sanitizeString(content){
+    sanitizeString(content:string){
         let c = this.virtualDoc.createElement('div');
         c.innerHTML = content;
 
@@ -49,7 +53,7 @@ class HTMLSanitizer{
         }
     }
 
-    sanitizeStringSafe(content){
+    sanitizeStringSafe(content:string){
         let c = this.virtualDoc.createElement('div');
         c.innerHTML = content;
 
@@ -66,7 +70,7 @@ class HTMLSanitizer{
         }
     }
 
-    sanitize(content){
+    sanitize(content:string){
         let c = this.virtualDoc.createElement('span');
         $(c).append(content);
 
@@ -74,7 +78,7 @@ class HTMLSanitizer{
         container.innerHTML = "";
 
         Array.from($(c).children()).forEach(n=>{
-            container.appendChild( this.sanitizeNode(n) );
+            container.appendChild( this.sanitizeNodeSafe(n) );
         });
 
         return container.innerHTML;
@@ -84,7 +88,7 @@ class HTMLSanitizer{
         let nodeName = node.nodeName.toLowerCase();
 
         if (nodeName === "#text") {
-            if (node.data.trim().length === 0) return this.virtualDoc.createTextNode('');
+            if (node['data'].trim().length === 0) return this.virtualDoc.createTextNode('');
             return node;
         }
         if (nodeName === "#comment") {
@@ -101,42 +105,48 @@ class HTMLSanitizer{
             return p;
         }
 
-        if (this.onNode(nodeName) === false){
+        let newNode = this.onNode(node);
+
+        if (newNode === false){
             return this.virtualDoc.createTextNode('');
         }
+        else{
+            if (newNode === undefined){
+                newNode = <HTMLElement>this.virtualDoc.createElement(nodeName);
+            }
 
-        let newNode = this.virtualDoc.createElement(nodeName);
+            for (let i = 0; i < node.attributes.length; i++){
+                let n:Attr = node.attributes[i];
+                let attrName = n.name;
+                let attrValue = n.value;
 
-        for (let i = 0; i < node.attributes.length; i++){
-            let n:Attr = node.attributes[i];
-            let attrName = n.name;
-            let attrValue = n.value;
+                if (attrName !== "style"){
+                    let res = this.onAttr(nodeName,attrName,attrValue);
 
-            if (attrName !== "style"){
-                let res = this.onAttr(nodeName,attrName,attrValue);
-
-                if (res !== null){
-                    newNode.setAttribute(attrName, res);
+                    if (res !== null){
+                        newNode.setAttribute(attrName, res);
+                    }
                 }
             }
-        }
 
-        for (let i = 0; i < node.style.length; i++){
-            let propertyName = node.style[i];
-            let propertyValue = node.style[propertyName];
+            for (let i = 0; i < node.style.length; i++){
+                let propertyName = node.style[i];
+                let propertyValue = node.style[propertyName];
 
-            let res = this.onCss(nodeName,propertyName,propertyValue);
+                let res = this.onCss(nodeName,propertyName,propertyValue);
 
-            if (res !== null){
-                newNode.style[propertyName] = res;
+                if (res !== null){
+                    newNode.style[propertyName] = res;
+                }
+
             }
 
+            while (node.childNodes.length > 0) {
+                let child = node.removeChild(node.childNodes[0]);
+                newNode.appendChild(this.sanitizeNode(<any>child));
+            }
         }
 
-        while (node.childNodes.length > 0) {
-            let child = node.removeChild(node.childNodes[0]);
-            newNode.appendChild(this.sanitizeNode(child));
-        }
         return newNode;
 
     }
@@ -166,43 +176,49 @@ class HTMLSanitizer{
             return div.childNodes;
         }
 
-        if (this.onNode(nodeName) === false){
+        let newNode = this.onNode(node);
+
+        if (newNode === false){
             return this.virtualDoc.createTextNode('');
         }
+        else{
+            if (newNode === undefined){
+                newNode = <HTMLElement>this.virtualDoc.createElement(nodeName);
+            }
 
-        let newNode = this.virtualDoc.createElement(nodeName);
+            for (let i = 0; i < node.attributes.length; i++){
+                let n:Attr = node.attributes[i];
+                let attrName = n.name;
+                let attrValue = n.value;
 
-        for (let i = 0; i < node.attributes.length; i++){
-            let n:Attr = node.attributes[i];
-            let attrName = n.name;
-            let attrValue = n.value;
+                if (attrName !== "style"){
+                    let res = this.onAttr(nodeName,attrName,attrValue);
 
-            if (attrName !== "style"){
-                let res = this.onAttr(nodeName,attrName,attrValue);
-
-                if (res !== null){
-                    newNode.setAttribute(attrName, res);
+                    if (res !== null){
+                        newNode.setAttribute(attrName, res);
+                    }
                 }
             }
-        }
 
-        for (let i = 0; i < node.style.length; i++){
-            let propertyName = node.style[i];
-            let propertyValue = node.style[propertyName];
+            for (let i = 0; i < node.style.length; i++){
+                let propertyName = node.style[i];
+                let propertyValue = node.style[propertyName];
 
-            let res = this.onCss(nodeName,propertyName,propertyValue);
+                let res = this.onCss(nodeName,propertyName,propertyValue);
 
-            if (res !== null){
-                newNode.style[propertyName] = res;
+                if (res !== null){
+                    newNode.style[propertyName] = res;
+                }
+
             }
 
+            while (node.childNodes.length > 0) {
+                let child = node.removeChild(node.childNodes[0]);
+                // newNode.appendChild(this.sanitizeNodeSafe(child));
+                $(newNode).append(this.sanitizeNodeSafe(child));
+            }
         }
 
-        while (node.childNodes.length > 0) {
-            let child = node.removeChild(node.childNodes[0]);
-            // newNode.appendChild(this.sanitizeNodeSafe(child));
-            $(newNode).append(this.sanitizeNodeSafe(child));
-        }
         return newNode;
 
     }

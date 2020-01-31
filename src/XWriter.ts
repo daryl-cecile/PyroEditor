@@ -11,10 +11,8 @@ type XWriterFile = {
 };
 
 type XWriterOptions = {
-    uploadPath: string,
-    authorizationToken: string,
-    authorizationNeeded: boolean,
-    warnUnSavedChangesWhenLeaving: boolean
+    warnUnSavedChangesWhenLeaving: boolean,
+    resourceBasePath: string
 }
 
 class XWriter extends HTMLElement{
@@ -22,9 +20,8 @@ class XWriter extends HTMLElement{
     static get observedAttributes() { return []; }
 
     private pauseTracker:boolean = false;
-    private fileInput = undefined;
-    private _shadowRoot:ShadowRoot;
-    private sanitizer:HTMLSanitizer;
+    private readonly _shadowRoot:ShadowRoot;
+    private readonly sanitizer:HTMLSanitizer;
 
     private selectedText = "";
     private interval = null;
@@ -40,10 +37,8 @@ class XWriter extends HTMLElement{
     private $target;
 
     private options:XWriterOptions = {
-        uploadPath:undefined,
-        authorizationToken: <string>$('[name="AUTH_TOKEN"]').val(),
-        authorizationNeeded: false,
-        warnUnSavedChangesWhenLeaving: true
+        warnUnSavedChangesWhenLeaving: true,
+        resourceBasePath: ""
     };
 
     private middleWares = {
@@ -61,10 +56,16 @@ class XWriter extends HTMLElement{
             if (callback) callback();
         },
         convertToSecureSource: (src)=>{
-            if ( src.substr(0,10).indexOf('://') > -1 ){
-                src = src.substr( src.indexOf('://')+3);
+            let parts = src.toLowerCase().split("://");
+            if (parts.length <= 1){
+                return `https://${src}`;
             }
-            return "https://slantedpress.com/ssc?q=" + encodeURIComponent(src);
+            else if (parts[0] !== "https"){
+                return `https${ src.substr( parts[0].length-1 ) }`;
+            }
+            else{
+                return src;
+            }
         },
         escapeHTML:(val)=>{
             if (this.sanitizer){
@@ -80,36 +81,30 @@ class XWriter extends HTMLElement{
         this._shadowRoot = this.attachShadow({mode: 'open'});
         this.initBody();
 
-        this.$writerPad = $('.writer-pad',this._shadowRoot);
-        this.$writerTitle = $('.writer-title',this._shadowRoot);
-        this.$writerSubtitle = $('.writer-sub-title',this._shadowRoot);
-        this.$writerContainer = $('.writer-container',this._shadowRoot);
+        $('body').append(
+            $('<link/>').attr({
+                rel:'stylesheet',
+                href: 'https://use.fontawesome.com/releases/v5.5.0/css/all.css'
+            })
+        );
+
+        this.$writerPad = this.$find('.writer-pad');
+        this.$writerTitle = this.$find('.writer-title');
+        this.$writerSubtitle = this.$find('.writer-sub-title');
+        this.$writerContainer = this.$find('.writer-container');
         this.$globalAdder = $();
         this.$target = this.$writerPad.children().first();
 
-        $(this._shadowRoot).append(
-            $('<link/>').attr({
-                rel:"stylesheet",
-                href: "/src/css/lens.css"
-            })
-        );
-
-        $(this._shadowRoot).append(
-            $('<link/>').attr({
-                rel:"stylesheet",
-                href: "/src/css/writerpro.css"
-            })
-        );
-
         this.sanitizer = new HTMLSanitizer({
-            allowedNodes:['p','b','i','strong','em','img','figcaption','figure','u','blockquote'],
+            allowedNodes:['p','b','i','strong','em','img','figcaption','figure','u','blockquote','a'],
             keepComments:false
         });
 
         this.sanitizer.onAttribute((nodeName,attr,val)=>{
             return XWriter.extendedSwitch(nodeName,attr)
                 .when("img","src",()=>{
-                    return val;
+                    // secure url
+                    return this.middleWares.convertToSecureSource(val);
                 })
                 .otherwise(()=>{
                     if (attr === "class" || attr === "data-is") return val;
@@ -118,9 +113,16 @@ class XWriter extends HTMLElement{
 
         }).onStyle((nodeName,prop,val)=>{
             return null;
+        }).onTag( node => {
+            if (node.tagName.toUpperCase() === "A"){
+                node.setAttribute('rel','noopener');
+                node.setAttribute('target','_blank');
+                return node;
+            }
+            return undefined;
         });
 
-        this.init();
+        this.start();
 
         window.addEventListener('beforeunload', (event) => {
             if (this.hasUnsavedChanges){
@@ -132,12 +134,32 @@ class XWriter extends HTMLElement{
         });
     }
 
+    public init(){
+        $(this._shadowRoot).append(
+            $('<link/>').attr({
+                rel:"stylesheet",
+                href: this.normalizeResourcePath("css/lens.css")
+            })
+        );
+
+        $(this._shadowRoot).append(
+            $('<link/>').attr({
+                rel:"stylesheet",
+                href: this.normalizeResourcePath("css/writerpro.css")
+            })
+        );
+        console.log('in');
+    }
+
     connectedCallback() {
-        let self = this;
         this.style.width = "100%";
     }
     disconnectedCallback() {}
     attributeChangedCallback(attrName, oldVal, newVal) {}
+
+    private $find(selector){
+        return $(selector, this._shadowRoot);
+    }
 
     public setOption(name:string,value:any){
         this.options[name] = value;
@@ -202,7 +224,7 @@ class XWriter extends HTMLElement{
         this.dispatchEvent(e);
     }
 
-    private init(){
+    private start(){
         let self = this;
         let inputTimeout = null;
 
@@ -217,11 +239,11 @@ class XWriter extends HTMLElement{
         this.$writerPad.on('mouseover',function(evt){
 
             let e = evt.originalEvent;
-            $('.h', self._shadowRoot).removeClass('h');
+            self.$find('.h').removeClass('h');
 
             let el = $(self._shadowRoot.elementFromPoint(e.clientX,e.clientY));
 
-            if ( $('.writer-tools.opened', self._shadowRoot).length === 0 && $('.right-click-menu', self._shadowRoot).length === 0 && self.pauseTracker === false ){
+            if ( self.$find('.writer-tools.opened').length === 0 && self.$find('.right-click-menu').length === 0 && self.pauseTracker === false ){
                 if ( el.parent().is(self.$writerPad) ){
                     self.$target = el;
                 }
@@ -504,8 +526,12 @@ class XWriter extends HTMLElement{
         return r;
     }
 
+    private normalizeResourcePath(resource:string) {
+        return `${this.options.resourceBasePath}/${resource}`;
+    }
+
     public loadPluginScript(name:string){
-        $.get(`/src/js/lens-blocks/${name}.js?t=${+ new Date()}`,(v)=>{
+        $.get(this.normalizeResourcePath(`lens-blocks/${name}.js?t=${+ new Date()}`),(v)=>{
             let f = new Function('Host',v);
             f(this);
         },"text");
@@ -808,7 +834,7 @@ class XWriter extends HTMLElement{
     private getCurrentlyFocusedParagraph(asJq:false):HTMLElement
     private getCurrentlyFocusedParagraph(asJq:true):JQuery<HTMLElement>
     private getCurrentlyFocusedParagraph(asJq:boolean=false){
-        let $p = $('[contenteditable]:focus', this._shadowRoot);
+        let $p = this.$find('[contenteditable]:focus');
         return (asJq ? $p : $p.get(0));
     }
 
