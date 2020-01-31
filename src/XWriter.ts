@@ -1,7 +1,4 @@
-import has = Reflect.has;
-/**
- * Created by darylcecile on 26/01/2020.
- */
+/// <reference path="../node_modules/@types/jquery/index.d.ts"/>
 
 declare const Host:XWriter;
 
@@ -12,6 +9,13 @@ type XWriterFile = {
     isDraft: boolean;
     eVersion: string;
 };
+
+type XWriterOptions = {
+    uploadPath: string,
+    authorizationToken: string,
+    authorizationNeeded: boolean,
+    warnUnSavedChangesWhenLeaving: boolean
+}
 
 class XWriter extends HTMLElement{
 
@@ -35,9 +39,9 @@ class XWriter extends HTMLElement{
     private $globalAdder;
     private $target;
 
-    private options = {
-        uploadPath:"https://assets.slantedpress.com/upload",
-        authorizationToken: $('[name="AUTH_TOKEN"]').val(),
+    private options:XWriterOptions = {
+        uploadPath:undefined,
+        authorizationToken: <string>$('[name="AUTH_TOKEN"]').val(),
         authorizationNeeded: false,
         warnUnSavedChangesWhenLeaving: true
     };
@@ -401,60 +405,11 @@ class XWriter extends HTMLElement{
         }
     }
 
-    public UploadFile(callback){
-        let self = this;
-        if (self.fileInput === null) {
-            self.fileInput = document.createElement('input');
-            self.fileInput.setAttribute('type', 'file');
-            self.fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg');
-            self.fileInput.classList.add('uploader');
-            self.fileInput.style.display = "none";
-            self.fileInput.addEventListener('change', ()=> {
-                if (self.fileInput.files != null && self.fileInput.files[0] != null) {
-
-                    self.triggerEvent("loading");
-
-                    let fdata = new FormData();
-                    fdata.append("image",self.fileInput.files[0]);
-
-                    $.ajax({
-                        url: self.options.uploadPath,
-                        method: "POST",
-                        data: fdata,
-                        processData: false,
-                        contentType: false,
-                        beforeSend: function (xhr) {
-                            /* Authorization header */
-                            if (self.options.authorizationNeeded) xhr.setRequestHeader("Authorization", self.options.authorizationToken);
-                        },
-                        success: (data)=> {
-                            let r = self.middleWares.parseJSON(data);
-                            callback(r.Data.link);
-                            self.fileInput.value = "";
-                            self.triggerEvent("ready");
-                        },
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            self.triggerEvent("ready");
-                            self.triggerEvent("error",{
-                                error: errorThrown
-                            });
-                            console.log(jqXHR,textStatus,errorThrown);
-                            callback(null);
-                        }
-                    });
-
-                }
-            });
-            self._shadowRoot.appendChild(self.fileInput);
-        }
-        self.fileInput.click();
-    }
-
     private async save(asDraft:boolean=false){
         return new Promise<XWriterFile>(async resolve => {
             let fileData:XWriterFile = {
-                title: $("[name='title']", this._shadowRoot).val(),
-                snippet: $("[name='snippet']", this._shadowRoot).val(),
+                title: <string>$("[name='title']", this._shadowRoot).val(),
+                snippet: <string>$("[name='snippet']", this._shadowRoot).val(),
                 content: await this.getContent(),
                 isDraft: asDraft,
                 eVersion: "4"
@@ -472,7 +427,7 @@ class XWriter extends HTMLElement{
 
     private async verifyArticle(){
         let val = await this.getContent();
-        let title = ($("[name='title']", this._shadowRoot).val() || "").trim();
+        let title = (<string>$("[name='title']", this._shadowRoot).val() || "").trim();
 
         return !!(title.length > 1 && (val));
     }
@@ -850,7 +805,9 @@ class XWriter extends HTMLElement{
         return $tool;
     }
 
-    private getCurrentlyFocusedParagraph(asJq=false){
+    private getCurrentlyFocusedParagraph(asJq:false):HTMLElement
+    private getCurrentlyFocusedParagraph(asJq:true):JQuery<HTMLElement>
+    private getCurrentlyFocusedParagraph(asJq:boolean=false){
         let $p = $('[contenteditable]:focus', this._shadowRoot);
         return (asJq ? $p : $p.get(0));
     }
@@ -936,12 +893,12 @@ class XWriter extends HTMLElement{
         return r;
     }
 
-    public get title(){
+    public get docTitle(){
         return $("[name='title']", this._shadowRoot).val() || "";
     }
 
     public get titleAsSlug(){
-        return this.title.toString().toLowerCase()
+        return this.docTitle.toString().toLowerCase()
             .replace(/\s+/g, '-')           // Replace spaces with -
             .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
             .replace(/\-\-+/g, '-')         // Replace multiple - with single -

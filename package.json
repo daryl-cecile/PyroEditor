@@ -1,0 +1,28 @@
+{
+  "name": "pyro.editor",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daryl-cecile/PyroEditor.git"
+  },
+  "keywords": [
+    "WYSIWYG",
+    "editor",
+    "html5",
+    "custom-element"
+  ],
+  "author": "Daryl Cecile <darylcecile@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/daryl-cecile/PyroEditor/issues"
+  },
+  "homepage": "https://github.com/daryl-cecile/PyroEditor#readme",
+  "devDependencies": {
+    "@types/jquery": "^3.3.31"
+  }
+}
